@@ -3,7 +3,7 @@ create database preferences;
 use preferences;
 
 create table preferences (
-    `id` int,
-    `ip` VARCHAR(2),
-    `preference` VARCHAR(2)
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `ip` VARCHAR(20),
+    `preference` VARCHAR(10)
 );
