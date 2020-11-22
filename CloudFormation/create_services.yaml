@@ -1,0 +1,92 @@
+Description:  Template to provide Task Definitions and the Services 
+
+Parameters:
+  CloudwatchLogsGroup:
+    Type: String
+    Description: "The Name of the CloudWatch Logs Group"
+  ImageFront:
+    Type: String
+    Description: The Image from the ECR
+  ImageBack:
+    Type: String
+    Description: The Image from the ECR
+    
+  
+Resources:
+# Task Definition Front-End
+  TaskDefinitionFront:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "Task"
+      ContainerDefinitions:
+      - Name: simple-app
+        Cpu: '10'
+        Essential: 'true'
+        Image: !Ref ImageFront
+        Memory: '300'
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref 'CloudwatchLogsGroup'
+            awslogs-region: !Ref 'AWS::Region'
+            awslogs-stream-prefix: ecs-demo-app
+        MountPoints:
+        - ContainerPath: /usr/app
+          SourceVolume: my-vol
+        PortMappings:
+        - ContainerPort: 80
+      Volumes:
+      - Name: my-vol
+
+# Service Back-End
+  TaskDefinitionBack:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "Task"
+      ContainerDefinitions:
+      - Name: simple-app
+        Cpu: '10'
+        Essential: 'true'
+        Image: ImageBack
+        Memory: '300'
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref 'CloudwatchLogsGroup'
+            awslogs-region: !Ref 'AWS::Region'
+            awslogs-stream-prefix: ecs-demo-app
+        MountPoints:
+        - ContainerPath: /usr/app
+          SourceVolume: my-vol
+        PortMappings:
+        - ContainerPort: 3000
+      Volumes:
+      - Name: my-vol
+
+# Service Front-End
+  serviceFront:
+    Type: AWS::ECS::Service
+    DependsOn: LoadBalancerListener
+    Properties:
+      Cluster: !Ref 'ECSClusterFrontEnd'
+      DesiredCount: '1'
+      LoadBalancers:
+      - ContainerName: simple-app
+        ContainerPort: '80'
+        TargetGroupArn: !Ref TargetGroup
+      Role: !Ref 'ECSServiceRole'
+      TaskDefinition: !Ref TaskDefinitionFront
+
+# Service Front-End
+  serviceBack:
+    Type: AWS::ECS::Service
+    DependsOn: LoadBalancerListener
+    Properties:
+      Cluster: !Ref 'ECSClusterFrontEnd'
+      DesiredCount: '1'
+      LoadBalancers:
+      - ContainerName: simple-app
+        ContainerPort: '3000'
+        TargetGroupArn: !Ref TargetGroup
+      Role: !Ref 'ECSServiceRole'
+      TaskDefinition: !Ref TaskDefinitionFront

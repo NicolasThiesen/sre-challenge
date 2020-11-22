@@ -1,0 +1,5 @@
+- name: "Criando infraestrutura (VPC,Subnets, SGs, RDS, ELB, AutoScaling, ECS, IAMs, ECR )"
+  local_action:
+    raw: aws cloudformation create-stack 
+         --stack-name baseInfra ../CloudFormation/create_infra.yaml 
+         --parameters ParameterKey=KeyPair,ParameterValue={{ KeyPair }}

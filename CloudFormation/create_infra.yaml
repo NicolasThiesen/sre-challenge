@@ -1,8 +1,36 @@
 
 Description:  Template to provide all infraestruture 
 
-
+Parameters:
+  KeyPair:
+   Type: String
+   Description: The key pair name to associate to instances
+  region:
+    Type: String
+    Description: The region
+  zone1: 
+    Type: String
+    Description: Zone 1 
+  zone2: 
+    Type: String
+    Description: Zone 2
+  AMI: 
+    Type: String
+    Description: AMI for the instance
+  instance-type: 
+    Type: String
+    Description: The type of the instance
+  masterUserName:
+    Type: String
+    Description: The username for the MySql
+  masterUserPassword:
+    Type: String
+    Description: The password for the MySql
+  RepoName: 
+    Type: String
+    Description: The name for the repository
 Resources:
+# VPC
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -174,7 +202,11 @@ Resources:
         - IpProtocol: tcp
           FromPort: 3000
           ToPort: 3000
-          SourceSecurityGroupId: !Ref WebAppSg
+          SourceSecurityGroupId: !Ref ALBSgBack
+        - IpProtocol: tcp
+          FromPort: 31000
+          ToPort: 61000
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
@@ -203,25 +235,39 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          SourceSecurityGroupId: !Ref ALBSg
+          SourceSecurityGroupId: !Ref ALBSgFront
         - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
+          FromPort: 31000
+          ToPort: 61000
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
       VpcId: !Ref VPC
-  ALBSg:
+  ALBSgFront:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: ALB security group
-      GroupName: ALB
+      GroupName: sgALBFront
       SecurityGroupIngress: 
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC
+  ALBSgBack:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: ALB security group
+      GroupName: sgALBBack
+      SecurityGroupIngress: 
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          SourceSecurityGroupId: !Ref WebAppSg
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
@@ -258,29 +304,28 @@ Resources:
         Ref: rdsSub
 
 
-# Load Balancer
-  LoadBalancer:
+# Load Balancer Front
+  LoadBalancerFront:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Scheme: internet-facing
-      SecurityGroups: [!Ref ALBSg]
+      SecurityGroups: [!Ref ALBSgFront]
       Subnets:
        - !Ref PublicSubnet1
        - !Ref PublicSubnet2
-  LoadBalancerListener:
+  LoadBalancerListenerFront:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref TargetGroup
-      LoadBalancerArn: !Ref LoadBalancer
+          TargetGroupArn: !Ref TargetGroupFront
+      LoadBalancerArn: !Ref LoadBalancerFront
       Port: 80
       Protocol: HTTP
-  TargetGroup:
-    DependsOn: "LoadBalancer"
+  TargetGroupFront:
+    DependsOn: "LoadBalancerFront"
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
-      TargetType: "instance"
       Name: !Join [ "-", [ "ALB", "Port" , 80 ] ]
       Port: 80
       Protocol: HTTP
@@ -288,71 +333,145 @@ Resources:
       HealthyThresholdCount: 2
       HealthCheckTimeoutSeconds: 10
       HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      UnhealthyThresholdCount: 3
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
           Value: "60"
 
-# ECS
+# Load Balancer Back
+  LoadBalancerBack:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      SecurityGroups: [!Ref ALBSgFront]
+      Subnets:
+       - !Ref PrivateSubnet1
+       - !Ref PrivateSubnet2
+  LoadBalancerListenerBack:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroupBack
+      LoadBalancerArn: !Ref LoadBalancerBack
+      Port: 3000
+      Protocol: HTTP
+  TargetGroupBack:
+    DependsOn: "LoadBalancerBack"
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      Name: !Join [ "-", [ "ALB", "Port" , 3000 ] ]
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      HealthyThresholdCount: 2
+      HealthCheckTimeoutSeconds: 10
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      UnhealthyThresholdCount: 3
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "60"
+
+# ECSs
   ECSClusterFrontEnd:
     Type: AWS::ECS::Cluster
     Properties:
       ClusterName: "ClusterFrontEnd"
-  TaskDefinitionFront:
-    Type: AWS::ECS::TaskDefinition
+  ECSClusterBackEnd:
+    Type: AWS::ECS::Cluster
     Properties:
-      Family: "Task"
-      ContainerDefinitions:
-      - Name: simple-app
-        Cpu: '10'
-        Essential: 'true'
-        Image: httpd:2.4
-        Memory: '300'
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group: !Ref 'CloudwatchLogsGroup'
-            awslogs-region: !Ref 'AWS::Region'
-            awslogs-stream-prefix: ecs-demo-app
-        MountPoints:
-        - ContainerPath: /usr/local/apache2/htdocs
-          SourceVolume: my-vol
-        PortMappings:
-        - ContainerPort: 80
-      - Name: busybox
-        Cpu: 10
-        Command: ['/bin/sh -c "while true; do echo ''<html> <head> <title>Amazon ECS
-            Sample App</title> <style>body {margin-top: 40px; background-color: #333;}
-            </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon
-            ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now
-            running on a container in Amazon ECS.</p>'' > top; /bin/date > date ;
-            echo ''</div></body></html>'' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html
-            ; sleep 1; done"']
-        EntryPoint: [sh, -c]
-        Essential: false
-        Image: busybox
-        Memory: 200
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group: !Ref 'CloudwatchLogsGroup'
-            awslogs-region: !Ref 'AWS::Region'
-            awslogs-stream-prefix: ecs-demo-app
-        VolumesFrom:
-        - SourceContainer: simple-app
-      Volumes:
-      - Name: my-vol
-  service:
-    Type: AWS::ECS::Service
-    DependsOn: LoadBalancerListener
+      ClusterName: "ClusterBackEnd"
+
+# ECR Repository
+  ECR:
+    Type: AWS::ECR::Repository
     Properties:
-      Cluster: !Ref 'ECSClusterFrontEnd'
-      DesiredCount: '1'
-      LoadBalancers:
-      - ContainerName: simple-app
-        ContainerPort: '80'
-        TargetGroupArn: !Ref TargetGroup
-      Role: !Ref 'ECSServiceRole'
-      TaskDefinition: !Ref TaskDefinitionFront
+      RepositoryName: "repository"
+# Cloud Watch
+  CloudwatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: ECSLogGroup
+      RetentionInDays: 14
+
+# Auto Scaling
+  ECSAutoScalingGroupFront:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: [!Ref PublicSubnet1, !Ref PublicSubnet2]
+      TargetGroupARNs: 
+      - !Ref TargetGroupFront
+      LaunchConfigurationName: !Ref 'ContainerInstancesFront'
+      MinSize: '1'
+      MaxSize: '2'
+      DesiredCapacity: '1'
+      Tags: 
+      - Key: Name
+        Value: WebApp
+        PropagateAtLaunch: 'true'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: 'true'
+  ECSAutoScalingGroupBack:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+      TargetGroupARNs: 
+      - !Ref TargetGroupBack
+      LaunchConfigurationName: !Ref 'ContainerInstancesBack'
+      MinSize: '1'
+      MaxSize: '2'
+      DesiredCapacity: '1'
+      Tags: 
+      - Key: Name
+        Value: BackEndApp
+        PropagateAtLaunch: 'true'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: 'true'
+
+
+
+# Launch Config Front
+  ContainerInstancesFront:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: "ami-0b260e8b9c98dd02f"
+      SecurityGroups: [!Ref WebAppSg]
+      InstanceType: 't2.micro'
+      IamInstanceProfile: !Ref 'EC2InstanceProfile'
+      KeyName: "worldskill-lap"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${ECSClusterFrontEnd} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroupFront --region ${AWS::Region}
+
+
+# Launch Config Back
+  ContainerInstancesBack:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: "ami-0b260e8b9c98dd02f"
+      SecurityGroups: [!Ref WebAppSg]
+      InstanceType: 't2.micro'
+      IamInstanceProfile: !Ref 'EC2InstanceProfile'
+      KeyName: "worldskill-lap"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${ECSClusterFrontEnd} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroupBack --region ${AWS::Region}
 
 # IAM ROLES
   ECSServiceRole:
@@ -417,52 +536,6 @@ Resources:
       Path: /
       Roles: [!Ref 'EC2Role']
 
-# Cloud Watch
-  CloudwatchLogsGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: ECSLogGroup
-      RetentionInDays: 14
-
-# Auto Scaling
-  ECSAutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      VPCZoneIdentifier: [!Ref PublicSubnet1, !Ref PublicSubnet2]
-      TargetGroupARNs: 
-      - !Ref TargetGroup
-      LaunchConfigurationName: !Ref 'ContainerInstances'
-      MinSize: '1'
-      MaxSize: '2'
-      DesiredCapacity: '1'
-      Tags: 
-      - Key: Name
-        Value: WebApp
-        PropagateAtLaunch: 'true'
-    CreationPolicy:
-      ResourceSignal:
-        Timeout: PT15M
-    UpdatePolicy:
-      AutoScalingReplacingUpdate:
-        WillReplace: 'true'
-
-  ContainerInstances:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    Properties:
-      ImageId: ami-04bf6dcdc9ab498ca
-      SecurityGroups: [!Ref WebAppSg]
-      InstanceType: 't2.micro'
-      IamInstanceProfile: !Ref 'EC2InstanceProfile'
-      KeyName: "worldskill-lap"
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash -xe
-          echo ECS_CLUSTER=${ECSClusterFrontEnd} >> /etc/ecs/ecs.config
-          yum install -y aws-cfn-bootstrap
-          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}
-
-
-
 
 Outputs:
   VPC:
@@ -493,9 +566,3 @@ Outputs:
     Description: A reference to the private subnet in the 2nd Availability Zone
     Value: !Ref PrivateSubnet2
   
-  ecsservice:
-    Value: !Ref 'service'
-  ecscluster:
-    Value: !Ref 'ECSClusterFrontEnd'
-  taskdef:
-    Value: !Ref 'TaskDefinitionFront'

@@ -1,0 +1,5 @@
+Resources:
+  ECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "repository"

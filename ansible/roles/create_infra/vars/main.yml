@@ -1,2 +1,6 @@
 ---
 # vars file for create_infra
+
+# Fill that Variables
+KeyPair: "worldskill-lap"
+
