@@ -1,2 +1,3 @@
 ---
 # tasks file for create_infra
+- include: create_infra.yaml
