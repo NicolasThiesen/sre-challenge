@@ -547,11 +547,11 @@ Outputs:
       Name: "baseInfra-TargetGroupBack"
   FrontRepo:
     Description: "The front-end Repository"
-    Value: !Ref ECRFront
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRFront}"
     Export:
       Name: "baseInfra-ECRFront"
   BackRepo:
     Description: "The back-end Repository"
-    Value: !Ref ECRBack
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRBack}"
     Export:
       Name: "baseInfra-ECRBack"

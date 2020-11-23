@@ -31,7 +31,7 @@ Resources:
       - Name: app-front
         Cpu: '10'
         Essential: 'true'
-        Image: !Ref ImageFront  #-
+        Image:  !ImportValue "baseInfra-ECRFront"
         Memory: '300'
         LogConfiguration:
           LogDriver: awslogs
@@ -56,7 +56,7 @@ Resources:
       - Name: app-back
         Cpu: '10'
         Essential: 'true'
-        Image: !Ref ImageBack #-
+        Image: !ImportValue "baseInfra-ECRBack"
         Memory: '300'
         LogConfiguration:
           LogDriver: awslogs
