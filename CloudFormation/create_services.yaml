@@ -1,9 +1,6 @@
 Description:  Template to provide Task Definitions and the Services 
 
 Parameters:
-  CloudwatchLogsGroup:
-    Type: String
-    Description: "The Name of the CloudWatch Logs Group"
   ImageFront:
     Type: String
     Description: The Image from the ECR
@@ -13,22 +10,34 @@ Parameters:
     
   
 Resources:
+# Cloud Watch
+  CloudwatchLogsGroupFront:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: ECSLogGroupFront
+      RetentionInDays: 14
+  CloudwatchLogsGroupBack:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: ECSLogGroupBack
+      RetentionInDays: 14
+
 # Task Definition Front-End
   TaskDefinitionFront:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: "Task"
+      Family: "TaskFront"
       ContainerDefinitions:
-      - Name: simple-app
+      - Name: app-front
         Cpu: '10'
         Essential: 'true'
-        Image: !Ref ImageFront
+        Image: !Ref ImageFront  #-
         Memory: '300'
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref 'CloudwatchLogsGroup'
-            awslogs-region: !Ref 'AWS::Region'
+            awslogs-group: !Ref 'CloudwatchLogsGroupFront'
+            awslogs-region: !ImportValue "baseInfra-Region"
             awslogs-stream-prefix: ecs-demo-app
         MountPoints:
         - ContainerPath: /usr/app
@@ -42,18 +51,18 @@ Resources:
   TaskDefinitionBack:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: "Task"
+      Family: "TaskBack"
       ContainerDefinitions:
-      - Name: simple-app
+      - Name: app-back
         Cpu: '10'
         Essential: 'true'
-        Image: ImageBack
+        Image: !Ref ImageBack #-
         Memory: '300'
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref 'CloudwatchLogsGroup'
-            awslogs-region: !Ref 'AWS::Region'
+            awslogs-group: !Ref 'CloudwatchLogsGroupBack'
+            awslogs-region: !ImportValue "baseInfra-Region"
             awslogs-stream-prefix: ecs-demo-app
         MountPoints:
         - ContainerPath: /usr/app
@@ -66,27 +75,48 @@ Resources:
 # Service Front-End
   serviceFront:
     Type: AWS::ECS::Service
-    DependsOn: LoadBalancerListener
     Properties:
-      Cluster: !Ref 'ECSClusterFrontEnd'
+      Cluster: !ImportValue "baseInfra-ECSClusterFrontEnd"
       DesiredCount: '1'
+      LaunchType: "EC2"
       LoadBalancers:
-      - ContainerName: simple-app
+      - ContainerName: app-front
         ContainerPort: '80'
-        TargetGroupArn: !Ref TargetGroup
+        TargetGroupArn: !ImportValue "baseInfra-TargetGroupFront"
       Role: !Ref 'ECSServiceRole'
       TaskDefinition: !Ref TaskDefinitionFront
 
-# Service Front-End
+# Service Back-End
   serviceBack:
     Type: AWS::ECS::Service
-    DependsOn: LoadBalancerListener
     Properties:
-      Cluster: !Ref 'ECSClusterFrontEnd'
+      Cluster: !ImportValue "baseInfra-ECSClusterBackEnd"
       DesiredCount: '1'
+      LaunchType: "EC2"
       LoadBalancers:
-      - ContainerName: simple-app
+      - ContainerName: app-back
         ContainerPort: '3000'
-        TargetGroupArn: !Ref TargetGroup
+        TargetGroupArn: !ImportValue "baseInfra-TargetGroupBack"
       Role: !Ref 'ECSServiceRole'
-      TaskDefinition: !Ref TaskDefinitionFront
+      TaskDefinition: !Ref TaskDefinitionBack
+
+# IAM Roles
+  ECSServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: ecs-service
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action: ['elasticloadbalancing:DeregisterInstancesFromLoadBalancer', 'elasticloadbalancing:DeregisterTargets',
+              'elasticloadbalancing:Describe*', 'elasticloadbalancing:RegisterInstancesWithLoadBalancer',
+              'elasticloadbalancing:RegisterTargets', 'ec2:Describe*', 'ec2:AuthorizeSecurityGroupIngress']
+            Resource: '*'
