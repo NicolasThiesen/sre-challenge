@@ -17,7 +17,7 @@ Parameters:
   AMI: 
     Type: String
     Description: AMI for the instance
-  instance-type: 
+  instanceType: 
     Type: String
     Description: The type of the instance
   masterUserName:
@@ -26,9 +26,12 @@ Parameters:
   masterUserPassword:
     Type: String
     Description: The password for the MySql
-  RepoName: 
+  maxScalingSize:
     Type: String
-    Description: The name for the repository
+    Description: The maximum of instance on Auto Scaling Group
+  minScalingSize:
+    Type: String
+    Description: The minimum of instance on Auto Scaling Group
 Resources:
 # VPC
   VPC:
@@ -58,7 +61,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: us-east-1a
+      AvailabilityZone: !Join [ "", [ !Ref region, !Ref zone1 ] ] 
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       Tags:
@@ -69,7 +72,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: us-east-1b
+      AvailabilityZone: !Join ["", [!Ref region, !Ref zone2 ]]
       CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: true
       Tags:
@@ -80,7 +83,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: us-east-1a
+      AvailabilityZone: !Join [ "", [ !Ref region, !Ref zone1 ] ] 
       CidrBlock: 10.0.3.0/24
       MapPublicIpOnLaunch: false
       Tags:
@@ -91,7 +94,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: us-east-1b
+      AvailabilityZone: !Join ["", [!Ref region, !Ref zone2 ]]
       CidrBlock: 10.0.4.0/24
       MapPublicIpOnLaunch: false
       Tags:
@@ -287,7 +290,7 @@ Resources:
   rdsDBInstance:
     Type: AWS::RDS::DBInstance
     Properties:
-      DBInstanceClass: "db.t2.micro"
+      DBInstanceClass:  !Join [".", [ "db", !Ref instanceType ]]
       AllocatedStorage: 100
       AllowMajorVersionUpgrade: false
       AutoMinorVersionUpgrade: false
@@ -296,8 +299,8 @@ Resources:
       VPCSecurityGroups:
         - Ref: MYSQLSg
       Engine: mysql
-      MasterUsername: "master"
-      MasterUserPassword: "teste123"
+      MasterUsername: !Ref masterUserName
+      MasterUserPassword: !Ref masterUserPassword
       MultiAZ: true  
       PubliclyAccessible: false
       DBSubnetGroupName: 
@@ -404,9 +407,9 @@ Resources:
       TargetGroupARNs: 
       - !Ref TargetGroupFront
       LaunchConfigurationName: !Ref 'ContainerInstancesFront'
-      MinSize: '1'
-      MaxSize: '2'
-      DesiredCapacity: '1'
+      MinSize: !Ref maxScalingSize
+      MaxSize: !Ref minScalingSize
+      DesiredCapacity: !Ref minScalingSize
       Tags: 
       - Key: Name
         Value: WebApp
@@ -424,9 +427,9 @@ Resources:
       TargetGroupARNs: 
       - !Ref TargetGroupBack
       LaunchConfigurationName: !Ref 'ContainerInstancesBack'
-      MinSize: '1'
-      MaxSize: '2'
-      DesiredCapacity: '1'
+      MinSize: !Ref maxScalingSize
+      MaxSize: !Ref minScalingSize
+      DesiredCapacity: !Ref minScalingSize
       Tags: 
       - Key: Name
         Value: BackEndApp
@@ -444,11 +447,11 @@ Resources:
   ContainerInstancesFront:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      ImageId: "ami-0b260e8b9c98dd02f"
+      ImageId: !Ref AMI
       SecurityGroups: [!Ref WebAppSg]
-      InstanceType: 't2.micro'
+      InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref 'EC2InstanceProfile'
-      KeyName: "worldskill-lap"
+      KeyName: !Ref KeyPair
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
@@ -461,15 +464,15 @@ Resources:
   ContainerInstancesBack:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      ImageId: "ami-0b260e8b9c98dd02f"
-      SecurityGroups: [!Ref WebAppSg]
-      InstanceType: 't2.micro'
+      ImageId: !Ref AMI
+      SecurityGroups: [!Ref BackEndSg]
+      InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref 'EC2InstanceProfile'
-      KeyName: "worldskill-lap"
+      KeyName: !Ref KeyPair
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
-          echo ECS_CLUSTER=${ECSClusterFrontEnd} >> /etc/ecs/ecs.config
+          echo ECS_CLUSTER=${ECSClusterBackEnd} >> /etc/ecs/ecs.config
           yum install -y aws-cfn-bootstrap
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroupBack --region ${AWS::Region}
 

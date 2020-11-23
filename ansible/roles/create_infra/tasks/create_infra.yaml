@@ -1,5 +1,15 @@
 - name: "Criando infraestrutura (VPC,Subnets, SGs, RDS, ELB, AutoScaling, ECS, IAMs, ECR )"
-  local_action:
-    raw: aws cloudformation create-stack 
-         --stack-name baseInfra ../CloudFormation/create_infra.yaml 
-         --parameters ParameterKey=KeyPair,ParameterValue={{ KeyPair }}
+  raw: aws cloudformation create-stack \
+         --stack-name baseInfra \
+         --template-body file://../CloudFormation/create_infra.yaml \
+         --parameters ParameterKey=KeyPair,ParameterValue={{ KeyPair }} \
+           ParameterKey=region,ParameterValue={{ region }} \
+           ParameterKey=zone1,ParameterValue={{ zone1 }} \
+           ParameterKey=zone2,ParameterValue={{ zone2 }} \
+           ParameterKey=AMI,ParameterValue={{ AMI }} \
+           ParameterKey=instanceType,ParameterValue={{ instanceType }} \
+           ParameterKey=masterUserName,ParameterValue={{ masterUserName }} \
+           ParameterKey=masterUserPassword,ParameterValue={{ masterUserPassword }} \
+           ParameterKey=maxScalingSize,ParameterValue={{ maxScalingSize }} \
+           ParameterKey=minScalingSize,ParameterValue={{ minScalingSize }} \
+         --capabilities CAPABILITY_IAM
