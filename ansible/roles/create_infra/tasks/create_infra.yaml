@@ -27,7 +27,7 @@
 
 - name: "Instalando python3-mysqldb e o Docker"
   apt:
-    name: {{ packages }} 
+    name: "{{ packages }}"
   vars:
     packages:
       - python3-mysqldb
