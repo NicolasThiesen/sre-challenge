@@ -7,7 +7,7 @@
   vars:
     packages:
       - python3
-      - pip3 
+      - python3-pip
 
 - name: "Criando infraestrutura (VPC,Subnets, SGs, RDS, ELB, AutoScaling, ECS, IAMs, ECR )"
   raw: aws cloudformation create-stack \
