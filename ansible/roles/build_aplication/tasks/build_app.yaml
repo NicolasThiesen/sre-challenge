@@ -1,0 +1,20 @@
+- name: "Logando no Repo"
+  raw: aws ecr get-login-password --region {{ region }} | docker login --username AWS --password-stdin {{ RepoURI }}
+
+- name: "Buildando Back-End"
+  raw:  docker build -t backapp .
+
+- name: "Tag local back-end image para o Repo Remoto"
+  raw: docker tag backapp:latest {{ BackRepo }}
+
+- name: "Dando push na imagem back-end"
+  raw: docker push {{ BackRepo }}
+
+- name: "Buildando Front-End"
+  raw: docker build -t frontapp .
+
+- name: "Tag local front-end image para o Repo Remoto"
+  raw: docker tag frontapp:latest {{ FrontRepo }}
+
+- name: "Dando push na imagem front-end"
+  raw: docker push {{ FrontRepo }}

@@ -545,14 +545,19 @@ Outputs:
     Value: !Ref TargetGroupBack
     Export:
       Name: "baseInfra-TargetGroupBack"
+  RepoURI:
+    Description: "The front-end Repository"
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com"
+    Export:
+      Name: "baseInfra-RepoURI"
   FrontRepo:
     Description: "The front-end Repository"
-    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRFront}"
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRFront}:latest"
     Export:
       Name: "baseInfra-ECRFront"
   BackRepo:
     Description: "The back-end Repository"
-    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRBack}"
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRBack}:latest"
     Export:
       Name: "baseInfra-ECRBack"
   LoadBalancerUrlFront:

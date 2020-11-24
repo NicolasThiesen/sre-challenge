@@ -1,4 +1,7 @@
 ---
 # vars file for build_aplication
+RepoURI:
+
 FrontRepo:
+
 BackRepo:

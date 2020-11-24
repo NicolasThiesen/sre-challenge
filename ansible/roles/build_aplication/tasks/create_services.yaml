@@ -1,0 +1,5 @@
+- name: "Criando Stack para ECS Services ( TaskDefinitions, ECS Services )"
+  raw: aws cloudformation create-stack \
+         --stack-name services \
+         --template-body file://../CloudFormation/create_services.yaml \
+         --capabilities CAPABILITY_IAM

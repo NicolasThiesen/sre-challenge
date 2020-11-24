@@ -44,16 +44,24 @@
 - name: "Adicionando a URL do Repo Front a file vars"
   local_action: lineinfile
     dest="roles/build_aplication/vars/main.yml"
-    regexp={{ stack.ansible_facts.cloudformation.teste.stack_outputs.FrontRepo }}
+    regexp={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.FrontRepo }}
     insertafter="FrontRepo"
-    line="  {{ stack.ansible_facts.cloudformation.teste.stack_outputs.FrontRepo }}"
+    line="  {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.FrontRepo }}"
 
 - name: "Adicionando a URL do Repo Back a file vars"
   local_action: lineinfile
     dest="roles/build_aplication/vars/main.yml"
-    regexp={{ stack.ansible_facts.cloudformation.teste.stack_outputs.BackRepo }}
+    regexp={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.BackRepo }}
     insertafter="BackRepo"
-    line="  {{ stack.ansible_facts.cloudformation.teste.stack_outputs.BackRepo }}"
+    line="  {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.BackRepo }}"
+
+- name: "Adicionando a URI do Repo"
+  local_action: lineinfile
+    dest="roles/build_aplication/vars/main.yml"
+    regexp={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RepoURI }}
+    insertafter="RepoURI"
+    line="  {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RepoURI }}"
+
 
 - name: Instalando o DB e a Tabela no MySql
   mysql_db: name=preferences

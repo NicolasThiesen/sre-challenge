@@ -1,13 +1,4 @@
 Description:  Template to provide Task Definitions and the Services 
-
-Parameters:
-  ImageFront:
-    Type: String
-    Description: The Image from the ECR
-  ImageBack:
-    Type: String
-    Description: The Image from the ECR
-    
   
 Resources:
 # Cloud Watch

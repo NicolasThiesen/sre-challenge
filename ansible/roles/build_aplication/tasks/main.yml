@@ -1,2 +1,4 @@
 ---
 # tasks file for build_aplication
+- include: build_app.yaml
+- include: create_services.yaml
