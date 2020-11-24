@@ -15,7 +15,7 @@
          --capabilities CAPABILITY_IAM
 
 - name: Esperando a Stack ficar pronta
-  raw: aws stack-create-complete --stack-name baseInfra
+  raw: aws cloudformation wait stack-create-complete --stack-name baseInfra
 
 - name: Pegando a URL do LoadBalancer da Stack
   local_action: cloudformation_facts
