@@ -2,7 +2,7 @@
   raw: aws cloudformation create-stack \
          --stack-name serviceCommand \
          --template-body file://../CloudFormation/run_sql_command.yaml \
-         --parameters ParameterKey=Command,ParameterValue={{ Command }} \
+         --parameters ParameterKey=Command,ParameterValue=`{{ Command }}` \
          --capabilities CAPABILITY_IAM
 
 - name: "Logando no Repo"
