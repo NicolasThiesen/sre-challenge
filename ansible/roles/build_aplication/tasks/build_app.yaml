@@ -8,11 +8,17 @@
       --output json --query 'Reservations[*].Instances[*].InstanceId'
   register: ids
 
-- name: "Rodando Script na instância back-end para criar o DB e a Table"
+- name: "Instalando o mysql em uma instância de back-end"
   raw:  aws ssm send-command \
         --instance-ids "{{ ids[0] }}" \
         --document-name "AWS-RunShellScript" \
-        --parameters '{"commands": ["#!/bin/bash","yum -y update","yum install -y mysql","mysql -u {{ masterUserName }} -p{{ masterUserPassword }} -h {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }} -e \"create database preferences; use preferences; create table preferences (id INT AUTO_INCREMENT PRIMARY KEY, ip VARCHAR(20), preference VARCHAR(10));\""]}'
+        --parameters commands="yum update && yum install -y mysql"
+
+- name: "Rodando Script na instância back-end para criar o DB e a Table"
+  raw: aws ssm send-command \
+        --instance-ids "{{ ids[0] }}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters commands='mysql -u {{ masterUserName }} -p{{ masterUserPassword }} -h {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }} -e "create database preferences; use preferences; create table preferences (id INT AUTO_INCREMENT PRIMARY KEY, ip VARCHAR(20), preference VARCHAR(10));"'
 
 - name: "Logando no Repo"
   raw: aws ecr get-login-password --region {{ region }} | docker login --username AWS --password-stdin {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RepoURI }}
