@@ -1,3 +1,14 @@
+- name: Atualizando repo
+  raw: apt update
+
+- name: "Instalando Python3 e Pip3 na máquina local"
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - python3
+      - pip3 
+
 - name: "Criando infraestrutura (VPC,Subnets, SGs, RDS, ELB, AutoScaling, ECS, IAMs, ECR )"
   raw: aws cloudformation create-stack \
          --stack-name baseInfra \
@@ -14,15 +25,27 @@
            ParameterKey=minScalingSize,ParameterValue={{ minScalingSize }} \
          --capabilities CAPABILITY_IAM
 
+
+- name: "Instalando boto3"
+  raw: pip3 install boto3
+
+- name: "Instalando python3 mysqldb"
+  apt:
+    name: python3-mysqldb
+
 - name: Esperando a Stack ficar pronta
   raw: aws cloudformation wait stack-create-complete --stack-name baseInfra
 
-- name: Pegando a URL do LoadBalancer da Stack
+- name: Pegando os outputs da Stack
   local_action: cloudformation_facts
                 stack_name="baseInfra"
-  register: stackName
+  register: stack
 
-- name: Criando o Banco de Dados e a Tabela 
-  raw: mysql -u {{ masterUserName }} -p{{masterUserPassword}} -h ${DatabaseURL} \
-       -e "create database preferences;use preferences;create table if not exists preferences (id int auto_increment primary key, ip varchar(20), preference varchar(10));"
-  
+- name: Instalando o DB e a Tabela no MySql
+  mysql_db: name=preferences
+            login_host={{ stack.RdsURL }} 
+            login_password={{ masterUserPassword }}
+            login_user={{ masterUserName }}
+            login_port=3306
+            state=import
+            target=../mysql/seed.sql
