@@ -41,34 +41,6 @@
                 stack_name="baseInfra"
   register: stack
 
-- name: "Adicionando a URL do Repo Front a file vars"
-  local_action: lineinfile
-    dest="roles/build_aplication/vars/main.yml"
-    regexp={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.FrontRepo }}
-    insertafter="FrontRepo:"
-    line="  {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.FrontRepo }}"
-
-- name: "Adicionando a URL do Repo Back a file vars"
-  local_action: lineinfile
-    dest="roles/build_aplication/vars/main.yml"
-    regexp={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.BackRepo }}
-    insertafter="BackRepo:"
-    line="  {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.BackRepo }}"
-
-- name: "Adicionando a URI do Repo"
-  local_action: lineinfile
-    dest="roles/build_aplication/vars/main.yml"
-    regexp={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RepoURI }}
-    insertafter="RepoURI:"
-    line="  {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RepoURI }}"
-
-- name: "Adicionando region"
-  local_action: lineinfile
-    dest="roles/build_aplication/vars/main.yml"
-    regexp={{ region }}
-    insertafter="region:"
-    line="  {{ region }}"
-
 - name: "Adicionando a variáveis de ambiente no app back-end"
   raw: echo "SERVICE_PORT=3333\nMYSQL_HOST={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }}\nMYSQL_USER={{ masterUserName }}\nMYSQL_PASSWORD={{ masterUserPassword }}\nMYSQL_DB=preferences" > "../back/.env" 
 

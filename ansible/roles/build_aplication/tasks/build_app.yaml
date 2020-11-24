@@ -1,27 +1,36 @@
-- name: "Subindo service para criar DB e Table no RDS"
-  raw: aws cloudformation create-stack \
-         --stack-name serviceCommand \
-         --template-body file://../CloudFormation/run_sql_command.yaml \
-         --parameters ParameterKey=Command,ParameterValue=`{{ Command }}` \
-         --capabilities CAPABILITY_IAM
+- name: Pegando os outputs da Stack
+  local_action: cloudformation_facts
+                stack_name="baseInfra"
+  register: stack
+
+- name: "Pegando os ids das instâncias do Back-End"
+  raw: aws ec2 describe-instances --filters 'Name=tag:Name,Values=BackEndApp' \
+      --output json --query 'Reservations[*].Instances[*].InstanceId'
+  register: ids
+
+- name: "Rodando Script na instância back-end para criar o DB e a Table"
+  raw:  aws ssm send-command \
+        --instance-ids "{{ ids[0] }}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters '{"commands": ["#!/bin/bash","yum -y update","yum install -y mysql","mysql -u {{ masterUserName }} -p{{ masterUserPassword }} -h {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }} -e \"create database preferences; use preferences; create table preferences (id INT AUTO_INCREMENT PRIMARY KEY, ip VARCHAR(20), preference VARCHAR(10));\""]}'
 
 - name: "Logando no Repo"
-  raw: aws ecr get-login-password --region {{ region }} | docker login --username AWS --password-stdin {{ RepoURI }}
+  raw: aws ecr get-login-password --region {{ region }} | docker login --username AWS --password-stdin {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RepoURI }}
 
 - name: "Buildando Back-End"
   raw:  docker build -t backapp ../back/
 
 - name: "Tag local back-end image para o Repo Remoto"
-  raw: docker tag backapp:latest {{ BackRepo }}
+  raw: docker tag backapp:latest {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.BackRepo }}
 
 - name: "Dando push na imagem back-end"
-  raw: docker push {{ BackRepo }}
+  raw: docker push {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.BackRepo }}
 
 - name: "Buildando Front-End"
   raw: docker build -t frontapp ../front/
 
 - name: "Tag local front-end image para o Repo Remoto"
-  raw: docker tag frontapp:latest {{ FrontRepo }}
+  raw: docker tag frontapp:latest {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.FrontRepo }}
 
 - name: "Dando push na imagem front-end"
-  raw: docker push {{ FrontRepo }}
+  raw: docker push {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.FrontRepo }}

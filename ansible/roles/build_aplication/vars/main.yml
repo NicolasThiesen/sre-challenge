@@ -1,13 +1,3 @@
 ---
 # vars file for build_aplication
-RepoURI:
-
-FrontRepo:
-
-BackRepo:
-
-RdsURL:
-
-Command:
-
-region: 
+region: "us-east-1"
