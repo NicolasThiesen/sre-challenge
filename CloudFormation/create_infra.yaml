@@ -224,7 +224,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
-          SourceSecurityGroupId: !Ref BackEndSg
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
@@ -302,7 +302,7 @@ Resources:
       MasterUsername: !Ref masterUserName
       MasterUserPassword: !Ref masterUserPassword
       MultiAZ: true  
-      PubliclyAccessible: false
+      PubliclyAccessible: true
       DBSubnetGroupName: 
         Ref: rdsSub
 
@@ -346,7 +346,7 @@ Resources:
   LoadBalancerBack:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Scheme: internet-facing
+      Scheme: internal
       SecurityGroups: [!Ref ALBSgFront]
       Subnets:
        - !Ref PrivateSubnet1
@@ -555,3 +555,12 @@ Outputs:
     Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRBack}"
     Export:
       Name: "baseInfra-ECRBack"
+  LoadBalancerUrlFront:
+    Description: The URL of the ALB Front
+    Value: !GetAtt LoadBalancerFront.DNSName
+  LoadBalancerUrlBack:
+    Description: The URL of the ALB Back
+    Value: !GetAtt LoadBalancerBack.DNSName
+  RdsURL: 
+    Description: The URL from RDS
+    Value: !GetAtt rdsDBInstance.Endpoint.Address

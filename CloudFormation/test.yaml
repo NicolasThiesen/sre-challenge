@@ -1,5 +1,20 @@
 Resources:
-  ECR:
+  ECRFront:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: "repository"
+      RepositoryName: "frontapp"
+  ECRBack:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "backapp"
+Outputs:
+  FrontRepo:
+    Description: "The front-end Repository"
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRFront}"
+    Export:
+      Name: "baseInfra-ECRFront"
+  BackRepo:
+    Description: "The back-end Repository"
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRBack}"
+    Export:
+      Name: "baseInfra-ECRBack"
