@@ -3,3 +3,4 @@
   become: yes
   roles:
    - create_infra
+   - build_aplication

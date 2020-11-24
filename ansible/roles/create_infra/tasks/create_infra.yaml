@@ -62,12 +62,15 @@
     insertafter="RepoURI"
     line="  {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RepoURI }}"
 
+- name: "Adicionando a variáveis de ambiente no app back-end"
+  raw: echo "SERVICE_PORT=3333\nMYSQL_HOST={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }}\nMYSQL_USER={{ masterUserName }}\nMYSQL_PASSWORD={{ masterUserPassword }}\nMYSQL_DB=preferences" > "../back/.env" 
 
-- name: Instalando o DB e a Tabela no MySql
-  mysql_db: name=preferences
-            login_host={{ stack.RdsURL }} 
-            login_password={{ masterUserPassword }}
-            login_user={{ masterUserName }}
-            login_port=3306
-            state=import
-            target=../mysql/seed.sql
+- name: "Adicionando a variáveis de ambiente no app back-end"
+  raw: echo "SERVICE_PORT=80\nBACKEND_HOST={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.LoadBalancerUrlBack }}\nBACKEND_PORT=3333" > "../front/.env"
+
+- name: "Adicionando o comando para executar a criação do db e da tabela"
+  local_action: lineinfile
+    dest="roles/build_aplication/vars/main.yml"
+    regexp={{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }}
+    insertafter="Command"
+    line='  mysql -u {{ masterUserName }} -p{{ masterUserPassword }} -h {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }} -e "create database preferences; use preferences; create table preferences (`id` INT AUTO_INCREMENT PRIMARY KEY,`ip` VARCHAR(20),`preference` VARCHAR(10));"'

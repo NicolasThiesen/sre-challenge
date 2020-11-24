@@ -1,8 +1,15 @@
+- name: "Subindo service para criar DB e Table no RDS"
+  raw: aws cloudformation create-stack \
+         --stack-name serviceCommand \
+         --template-body file://../CloudFormation/run_sql_command.yaml \
+         --parameters ParameterKey=Command,ParameterValue={{ Command }} \
+         --capabilities CAPABILITY_IAM
+
 - name: "Logando no Repo"
   raw: aws ecr get-login-password --region {{ region }} | docker login --username AWS --password-stdin {{ RepoURI }}
 
 - name: "Buildando Back-End"
-  raw:  docker build -t backapp .
+  raw:  docker build -t backapp ../back/
 
 - name: "Tag local back-end image para o Repo Remoto"
   raw: docker tag backapp:latest {{ BackRepo }}
@@ -11,7 +18,7 @@
   raw: docker push {{ BackRepo }}
 
 - name: "Buildando Front-End"
-  raw: docker build -t frontapp .
+  raw: docker build -t frontapp ../front/
 
 - name: "Tag local front-end image para o Repo Remoto"
   raw: docker tag frontapp:latest {{ FrontRepo }}
