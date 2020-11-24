@@ -1,12 +1,11 @@
 - name: Atualizando repo
   raw: apt update
 
-- name: "Instalando Python3 e Pip3 na máquina local"
+- name: "Instalando Pip3 se não existir na máquina local"
   apt:
     name: "{{ packages }}"
   vars:
     packages:
-      - python3
       - python3-pip
 
 - name: "Criando infraestrutura (VPC,Subnets, SGs, RDS, ELB, AutoScaling, ECS, IAMs, ECR )"
@@ -29,9 +28,13 @@
 - name: "Instalando boto3"
   raw: pip3 install boto3
 
-- name: "Instalando python3 mysqldb"
+- name: "Instalando python3-mysqldb e o Docker"
   apt:
-    name: python3-mysqldb
+    name: {{ packages }} 
+  vars:
+    packages:
+      - python3-mysqldb
+      - docker
 
 - name: Esperando a Stack ficar pronta
   raw: aws cloudformation wait stack-create-complete --stack-name baseInfra
@@ -40,6 +43,20 @@
   local_action: cloudformation_facts
                 stack_name="baseInfra"
   register: stack
+
+- name: "Adicionando a URL do Repo Front a file vars"
+  local_action: lineinfile
+    dest="roles/build_aplication/vars/main.yml"
+    regexp={{ stack.ansible_facts.cloudformation.teste.stack_outputs.FrontRepo }}
+    insertafter="FrontRepo"
+    line="  {{ stack.ansible_facts.cloudformation.teste.stack_outputs.FrontRepo }}"
+
+- name: "Adicionando a URL do Repo Back a file vars"
+  local_action: lineinfile
+    dest="roles/build_aplication/vars/main.yml"
+    regexp={{ stack.ansible_facts.cloudformation.teste.stack_outputs.BackRepo }}
+    insertafter="BackRepo"
+    line="  {{ stack.ansible_facts.cloudformation.teste.stack_outputs.BackRepo }}"
 
 - name: Instalando o DB e a Tabela no MySql
   mysql_db: name=preferences
