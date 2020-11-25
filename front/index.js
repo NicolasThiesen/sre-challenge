@@ -25,7 +25,7 @@ router.post('/', function (req, res) {
         method: 'POST',
         url: `http://${process.env.BACKEND_HOST}:${process.env.BACKEND_PORT}`,
         body: JSON.stringify(req.body),
-        timeout: 1000
+        timeout: 10000
     }, (err, result) => {
         if (!err) {
             res.redirect("/");

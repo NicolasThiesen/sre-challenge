@@ -65,7 +65,7 @@ Resources:
         - ContainerPath: /usr/app
           SourceVolume: my-vol
         PortMappings:
-        - ContainerPort: 3000
+        - ContainerPort: 3333
       Volumes:
       - Name: my-vol
 
@@ -92,7 +92,7 @@ Resources:
       LaunchType: "EC2"
       LoadBalancers:
       - ContainerName: app-back
-        ContainerPort: '3000'
+        ContainerPort: '3333'
         TargetGroupArn: !ImportValue "baseInfra-TargetGroupBack"
       Role: !Ref 'ECSServiceRole'
       TaskDefinition: !Ref TaskDefinitionBack

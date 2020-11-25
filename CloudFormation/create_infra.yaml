@@ -200,11 +200,11 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: for the Back-End instances
-      GroupName: Instance
+      GroupName: BackEndSG
       SecurityGroupIngress: 
         - IpProtocol: tcp
-          FromPort: 3000
-          ToPort: 3000
+          FromPort: 3333
+          ToPort: 3333
           SourceSecurityGroupId: !Ref ALBSgBack
         - IpProtocol: tcp
           FromPort: 31000
@@ -268,8 +268,8 @@ Resources:
       GroupName: sgALBBack
       SecurityGroupIngress: 
         - IpProtocol: tcp
-          FromPort: 3000
-          ToPort: 3000
+          FromPort: 3333
+          ToPort: 3333
           SourceSecurityGroupId: !Ref WebAppSg
       SecurityGroupEgress:
         - IpProtocol: -1
@@ -358,14 +358,14 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref TargetGroupBack
       LoadBalancerArn: !Ref LoadBalancerBack
-      Port: 3000
+      Port: 3333
       Protocol: HTTP
   TargetGroupBack:
     DependsOn: "LoadBalancerBack"
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
-      Name: !Join [ "-", [ "ALB", "Port" , 3000 ] ]
-      Port: 3000
+      Name: !Join [ "-", [ "ALB", "Port" , 3333 ] ]
+      Port: 3333
       Protocol: HTTP
       VpcId: !Ref VPC
       HealthyThresholdCount: 2

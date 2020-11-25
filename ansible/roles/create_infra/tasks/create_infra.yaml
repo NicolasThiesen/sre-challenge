@@ -61,4 +61,4 @@
   raw: aws ssm send-command \
         --instance-ids "{{ ids.stdout_lines[0] }}" \
         --document-name "AWS-RunShellScript" \
-        --parameters commands='"mysql -u {{ masterUserName }} -p{{ masterUserPassword }} -h {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }} -e \"create database preferences; use preferences; create table preferences (id INT AUTO_INCREMENT PRIMARY KEY, ip VARCHAR(20), preference VARCHAR(10));\""'
+        --parameters commands='"mysql -u {{ masterUserName }} -p"{{ masterUserPassword }} -h {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }} -e \"create database preferences; use preferences; create table preferences (id INT AUTO_INCREMENT PRIMARY KEY, ip VARCHAR(20), preference VARCHAR(10));\""'
