@@ -347,7 +347,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Scheme: internal
-      SecurityGroups: [!Ref ALBSgFront]
+      SecurityGroups: [!Ref ALBSgBack]
       Subnets:
        - !Ref PrivateSubnet1
        - !Ref PrivateSubnet2
