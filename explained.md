@@ -9,7 +9,7 @@
 - Ter as credenciais setadas na região us-east-1 ( de preferência ter uma credencial com permissões de administrador )
 - Seria ideal ter o docker já pré instalado, mas se não tiver o ansible irá tentar instalar
 
-*obs: Se quiser customizar a região ou outras coisas, altere em `ansible/roles/create_infra/vars/main.yml` e em `ansible/roles/build_aplication/vars/main.yml`*
+**obs: Se quiser customizar a região ou outras coisas, altere em `ansible/roles/create_infra/vars/main.yml` e em `ansible/roles/build_aplication/vars/main.yml`**
 ## Setar Credenciais da AWS:
 
 - Setar credenciais
