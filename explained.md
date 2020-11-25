@@ -2,11 +2,12 @@
 
 ## Requisitos:
 
-- SO: Ubuntu versão > 18.0 ou derivações do Debian 
+- SO: Ubuntu versão > 18.0 ou derivações do Debian
 - Ter ansible instalado v-2.10
 - Ter aws cli instalado
 - Ter pytho3 instalado
 - Ter as credenciais setadas na região us-east-1
+- Seria ideal ter o docker já pré instalado, mas se não tiver o ansible irá instalar
 
 *obs: Se quiser custumizar a região ou outras coisas, altere em `ansible/roles/create_infra/vars/main.yml` e em `ansible/roles/build_aplication/vars/main.yml`*
 ## Setar Credenciais da AWS:
