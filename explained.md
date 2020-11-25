@@ -1,7 +1,7 @@
 # Explicação de como rodar o Deploy
 
 ## Diagrama do Projeto
-![Diagrama](./.imgs/SRE Challenge Diagram.png)
+![Diagrama](./.imgs/SRE_Challenge_Diagram.png)
 ## Requisitos:
 
 - SO: Ubuntu versão > 18.0 ou derivações do Debian
