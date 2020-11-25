@@ -6,7 +6,9 @@
 - Ter ansible instalado v-2.10
 - Ter aws cli instalado
 - Ter pytho3 instalado
+- Ter as credenciais setadas na região us-east-1
 
+*obs: Se quiser custumizar a região ou outras coisas, altere em `ansible/roles/create_infra/vars/main.yml` e em `ansible/roles/build_aplication/vars/main.yml`*
 ## Setar Credenciais da AWS:
 
 - Setar credenciais
