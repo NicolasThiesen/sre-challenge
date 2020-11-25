@@ -18,6 +18,7 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: "TaskFront"
+      ExecutionRoleArn: !Ref ECSServiceRole
       ContainerDefinitions:
       - Name: app-front
         Cpu: '10'
@@ -44,6 +45,7 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: "TaskBack"
+      ExecutionRoleArn: !Ref ECSServiceRole
       ContainerDefinitions:
       - Name: app-back
         Cpu: '10'
@@ -111,5 +113,5 @@ Resources:
           - Effect: Allow
             Action: ['elasticloadbalancing:DeregisterInstancesFromLoadBalancer', 'elasticloadbalancing:DeregisterTargets',
               'elasticloadbalancing:Describe*', 'elasticloadbalancing:RegisterInstancesWithLoadBalancer',
-              'elasticloadbalancing:RegisterTargets', 'ec2:Describe*', 'ec2:AuthorizeSecurityGroupIngress']
+              'elasticloadbalancing:RegisterTargets', 'ec2:Describe*', 'ec2:AuthorizeSecurityGroupIngress',"ecr:GetAuthorizationToken"]
             Resource: '*'
