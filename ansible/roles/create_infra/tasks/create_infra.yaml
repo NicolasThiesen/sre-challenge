@@ -26,7 +26,11 @@
 
 - name: "Instalando o Docker"
   apt:
-    name: "docker"
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - "docker"
+    - "docker.io"
 
 - name: Esperando a Stack ficar pronta
   raw: aws cloudformation wait stack-create-complete --stack-name baseInfra
