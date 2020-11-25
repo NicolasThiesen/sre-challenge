@@ -21,6 +21,9 @@
 aws configure
 ```
 
+## Importante Antes de executar o Projeto
+
+- Coloque um key pair name na variável `KeyPair=` em `ansible/roles/create_infra/vars/main.yml` para as instâncias usarem
 ## Rodar:
 
 - Vá para pasta ansible
