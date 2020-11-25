@@ -57,8 +57,13 @@
         --document-name "AWS-RunShellScript" \
         --parameters commands="yum update && yum install -y mysql"
 
+- name: "Esperando MySql ser instalado"
+  wait_for:
+    timeout: 30
+  delegate_to: localhost
+
 - name: "Rodando Script na instância back-end para criar o DB e a Table"
   raw: aws ssm send-command \
         --instance-ids "{{ ids.stdout_lines[0] }}" \
         --document-name "AWS-RunShellScript" \
-        --parameters commands='"mysql -u {{ masterUserName }} -p"{{ masterUserPassword }} -h {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }} -e \"create database preferences; use preferences; create table preferences (id INT AUTO_INCREMENT PRIMARY KEY, ip VARCHAR(20), preference VARCHAR(10));\""'
+        --parameters commands='"mysql -u {{ masterUserName }} -p{{ masterUserPassword }} -h {{ stack.ansible_facts.cloudformation.baseInfra.stack_outputs.RdsURL }} -e \"create database preferences; use preferences; create table preferences (id INT AUTO_INCREMENT PRIMARY KEY, ip VARCHAR(20), preference VARCHAR(10));\""'
