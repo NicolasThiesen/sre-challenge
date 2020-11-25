@@ -23,7 +23,7 @@ Resources:
         Cpu: '10'
         Essential: 'true'
         Image:  !ImportValue "baseInfra-ECRFront"
-        Memory: '300'
+        Memory: '256'
         LogConfiguration:
           LogDriver: awslogs
           Options:
@@ -48,7 +48,7 @@ Resources:
         Cpu: '10'
         Essential: 'true'
         Image: !ImportValue "baseInfra-ECRBack"
-        Memory: '300'
+        Memory: '256'
         LogConfiguration:
           LogDriver: awslogs
           Options:
@@ -68,7 +68,7 @@ Resources:
     Type: AWS::ECS::Service
     Properties:
       Cluster: !ImportValue "baseInfra-ECSClusterFrontEnd"
-      DesiredCount: '1'
+      DesiredCount: '2'
       LaunchType: "EC2"
       LoadBalancers:
       - ContainerName: app-front
@@ -82,7 +82,7 @@ Resources:
     Type: AWS::ECS::Service
     Properties:
       Cluster: !ImportValue "baseInfra-ECSClusterBackEnd"
-      DesiredCount: '1'
+      DesiredCount: '2'
       LaunchType: "EC2"
       LoadBalancers:
       - ContainerName: app-back
