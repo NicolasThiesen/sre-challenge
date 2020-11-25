@@ -21,6 +21,7 @@ Resources:
       ContainerDefinitions:
       - Name: app-front
         Cpu: '10'
+        Command: ["node", "index.js"]
         Essential: 'true'
         Image:  !ImportValue "baseInfra-ECRFront"
         Memory: '300'
@@ -46,6 +47,7 @@ Resources:
       ContainerDefinitions:
       - Name: app-back
         Cpu: '10'
+        Command: ["node", "index.js"]
         Essential: 'true'
         Image: !ImportValue "baseInfra-ECRBack"
         Memory: '300'
