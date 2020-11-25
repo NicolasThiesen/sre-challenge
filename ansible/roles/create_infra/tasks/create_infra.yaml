@@ -51,7 +51,7 @@
       --output text --query 'Reservations[*].Instances[*].InstanceId'
   register: ids
 
-- name: "Instalando o mysql em uma instância de back-end"
+- name: "Instalando o MySql em uma instância de back-end"
   raw:  aws ssm send-command \
         --instance-ids "{{ ids.stdout_lines[0] }}" \
         --document-name "AWS-RunShellScript" \
